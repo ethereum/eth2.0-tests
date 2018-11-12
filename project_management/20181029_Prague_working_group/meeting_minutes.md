@@ -1,6 +1,8 @@
 # ETH 2.0 Test Group Meeting
 November 29, 2018
 Devcon, Prague
+HackMD: https://notes.ethereum.org/s/SkEnERl6Q
+
 
 ## Overview
 This document provides the meeting minutes for the test group meeting at Devcon on Monday 29, 2018.
