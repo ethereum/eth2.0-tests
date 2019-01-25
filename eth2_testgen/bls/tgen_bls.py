@@ -146,22 +146,9 @@ if __name__ == '__main__':
                 sigs.append(sig)
 
     # This takes too long, empty for now
+    # TODO: Verify messages signed in case04
     case05_verify_messages = []
-    # for pubkey in pubkeys:
-    #     for sig in sigs:
-    #         for message in MESSAGES:
-    #             for domain in DOMAINS:
-    #                 case04_sign_messages.append({
-    #                     'input': {
-    #                         'pubkey': int_to_hex(pubkey),
-    #                         'message': '0x' + message.hex(),
-    #                         'signature': sig,
-    #                         'domain': domain
-    #                     },
-    #                     'output': bls.verify(message, pubkey, sig, domain)
-    #                 })
 
-    #
     case06_aggregate_sigs = []
     for domain in DOMAINS:
         for message in MESSAGES:
