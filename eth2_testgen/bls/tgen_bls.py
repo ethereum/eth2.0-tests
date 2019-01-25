@@ -5,9 +5,8 @@ Usage:
 """
 
 # Standard library
-import random
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Tuple
 
 # Third-party
 import yaml
@@ -20,11 +19,11 @@ import bls
 from hash import hash_eth2
 
 
-
 def int_to_hex(n: int) -> str:
     return '0x' + int_to_big_endian(n).hex()
 def hex_to_int(x: str) -> int:
     return int(x, 16)
+
 
 # Note: even though a domain is only an uint64,
 # To avoid issues with YAML parsers that are limited to 53-bit (JS language limit)
@@ -51,36 +50,38 @@ PRIVKEYS = [
     hex_to_int('0x00000000000000000000000000000000328388aff0d4a5b7dc9205abd374e7e98f3cd9f3418edb4eafda5fb16473d216'),
 ]
 
-def hash_message(msg: bytes, domain: int,) -> Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]]:
+
+def hash_message(msg: bytes,
+                 domain: int) ->Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]]:
     """
     Hash message
     Input:
         - Message as bytes
         - domain as uint64
     Output:
-       - Message hash as a G2 point (Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]])
+        - Message hash as a G2 point
     """
-    fq2x3 = []
-    for fq2 in bls.hash_to_G2(msg, domain):
-        fqx2 = []
-        for fq in fq2.coeffs: # from py_ecc
-            fqx2.append(int_to_hex(fq))
-        fq2x3.append(fqx2)
-    return fq2x3
+    return [
+        [
+            int_to_hex(fq2.coeffs[0]),
+            int_to_hex(fq2.coeffs[1]),
+        ]
+        for fq2 in bls.hash_to_G2(msg, domain)
+    ]
+
 
 def hash_message_compressed(msg: bytes, domain: int) -> Tuple[str, str]:
     """
     Hash message
     Input:
-      - Message as bytes
-      - domain as uint64
+        - Message as bytes
+        - domain as uint64
     Output:
-       - Message hash as a compressed G2 point
+        - Message hash as a compressed G2 point
     """
-    result = []
-    for n in bls.compress_G2(bls.hash_to_G2(msg, domain)):
-        result.append(int_to_hex(n))
-    return result
+    z1, z2 = bls.compress_G2(bls.hash_to_G2(msg, domain))
+    return [int_to_hex(z1), int_to_hex(z2)]
+
 
 if __name__ == '__main__':
 
@@ -93,7 +94,6 @@ if __name__ == '__main__':
         'version': 1.0
     }
 
-    # 
     case01_message_hash_G2_uncompressed = []
     for msg in MESSAGES:
         for domain in DOMAINS:
@@ -102,7 +102,6 @@ if __name__ == '__main__':
                 'output': hash_message(msg, domain)
             })
 
-    # 
     case02_message_hash_G2_compressed = []
     for msg in MESSAGES:
         for domain in DOMAINS:
@@ -110,14 +109,12 @@ if __name__ == '__main__':
                 'input': {'message': '0x' + msg.hex(), 'domain': int_to_hex(domain)},
                 'output': hash_message_compressed(msg, domain)
             })
-    
-    #
+
     case03_private_to_public_key = []
-    pubkeys = [] # Used in later cases
-    pubkeys_serial = [] # Used in public key aggregation
+    pubkeys = []  #  Used in later cases
+    pubkeys_serial = []  #  Used in public key aggregation
     for privkey in PRIVKEYS:
-        pubkey = bls.privtopub(privkey)
-        pubkey_serial = '0x' + pubkey.hex()
+        pubkey_serial = '0x' + bls.privtopub(privkey).hex()
         case03_private_to_public_key.append({
             'input': int_to_hex(privkey),
             'output': pubkey_serial
@@ -125,12 +122,8 @@ if __name__ == '__main__':
         pubkeys.append(pubkey)
         pubkeys_serial.append(pubkey_serial)
 
-    #
     case04_sign_messages = []
-    sigs = [] # used in verify
-    # print(f"Privkeys: {PRIVKEYS}")
-    # print(f"Messages: {MESSAGES}")
-    # print(f"Domains: {DOMAINS}")
+    sigs = []  # used in verify
     for privkey in PRIVKEYS:
         for message in MESSAGES:
             for domain in DOMAINS:
@@ -145,9 +138,8 @@ if __name__ == '__main__':
                 })
                 sigs.append(sig)
 
-    # This takes too long, empty for now
-    # TODO: Verify messages signed in case04
-    case05_verify_messages = []
+    # TODO: case05_verify_messages: Verify messages signed in case04
+    # It takes too long, empty for now
 
     case06_aggregate_sigs = []
     for domain in DOMAINS:
@@ -157,11 +149,10 @@ if __name__ == '__main__':
                 sig = bls.sign(message, privkey, domain)
                 sigs.append(sig)
             case06_aggregate_sigs.append({
-                'input': [ '0x' + sig.hex() for sig in sigs],
+                'input': ['0x' + sig.hex() for sig in sigs],
                 'output': '0x' + bls.aggregate_signatures(sigs).hex(),
             })
 
-    #
     case07_aggregate_pubkeys = {
         'input': pubkeys_serial,
         'output': '0x' + bls.aggregate_pubkeys(pubkeys).hex(),
@@ -176,13 +167,32 @@ if __name__ == '__main__':
     with open(sys.argv[1], 'w') as outfile:
         # Dump at top level
         yaml.dump(metadata, outfile, default_flow_style=False)
-        # default_flow_style will unravel "ValidatorRecord" and "committee" line, exploding file size
-        yaml.dump({'case01_message_hash_G2_uncompressed': case01_message_hash_G2_uncompressed}, outfile)
-        yaml.dump({'case02_message_hash_G2_compressed': case02_message_hash_G2_compressed}, outfile)
-        yaml.dump({'case03_private_to_public_key': case03_private_to_public_key}, outfile)
-        yaml.dump({'case04_sign_messages': case04_sign_messages}, outfile)
+        # default_flow_style will unravel "ValidatorRecord" and "committee" line,
+        # exploding file size
+        yaml.dump(
+            {'case01_message_hash_G2_uncompressed': case01_message_hash_G2_uncompressed},
+            outfile,
+        )
+        yaml.dump(
+            {'case02_message_hash_G2_compressed': case02_message_hash_G2_compressed},
+            outfile,
+        )
+        yaml.dump(
+            {'case03_private_to_public_key': case03_private_to_public_key},
+            outfile,
+        )
+        yaml.dump(
+            {'case04_sign_messages': case04_sign_messages},
+            outfile,
+        )
 
         # Too time consuming to generate
         # yaml.dump({'case05_verify_messages': case05_verify_messages}, outfile)
-        yaml.dump({'case06_aggregate_sigs': case06_aggregate_sigs}, outfile)
-        yaml.dump({'case07_aggregate_pubkeys': case07_aggregate_pubkeys}, outfile)
+        yaml.dump(
+            {'case06_aggregate_sigs': case06_aggregate_sigs},
+            outfile,
+        )
+        yaml.dump(
+            {'case07_aggregate_pubkeys': case07_aggregate_pubkeys},
+            outfile,
+        )

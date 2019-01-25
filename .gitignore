@@ -1,5 +1,6 @@
 .pytest_cache/
 .python-version
 __pycache__/
+.mypy_cache/
 test.py
 build/
