@@ -1,6 +1,8 @@
-# BLS test vectors generator
-# Usage:
-#   "python tgen_bls path/to/output.yml"
+"""
+BLS test vectors generator
+Usage:
+    "python tgen_bls path/to/output.yml"
+"""
 
 # Standard library
 import random
@@ -50,12 +52,14 @@ PRIVKEYS = [
 ]
 
 def hash_message(msg: bytes, domain: int,) -> Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]]:
-    ## Hash message
-    ## Input:
-    ##   - Message as bytes
-    ##   - domain as uint64
-    ## Output:
-    ##   - Message hash as a G2 point (Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]])
+    """
+    Hash message
+    Input:
+        - Message as bytes
+        - domain as uint64
+    Output:
+       - Message hash as a G2 point (Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]])
+    """
     fq2x3 = []
     for fq2 in bls.hash_to_G2(msg, domain):
         fqx2 = []
@@ -65,12 +69,14 @@ def hash_message(msg: bytes, domain: int,) -> Tuple[Tuple[str, str], Tuple[str, 
     return fq2x3
 
 def hash_message_compressed(msg: bytes, domain: int) -> Tuple[str, str]:
-    ## Hash message
-    ## Input:
-    ##   - Message as bytes
-    ##   - domain as uint64
-    ## Output:
-    ##   - Message hash as a compressed G2 point
+    """
+    Hash message
+    Input:
+      - Message as bytes
+      - domain as uint64
+    Output:
+       - Message hash as a compressed G2 point
+    """
     result = []
     for n in bls.compress_G2(bls.hash_to_G2(msg, domain)):
         result.append(int_to_hex(n))
