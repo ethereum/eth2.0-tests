@@ -138,7 +138,7 @@ if __name__ == '__main__':
     pubkeys_serial = [] # Used in public key aggregation
     for privkey in PRIVKEYS:
         pubkey = bls.privtopub(privkey)
-        pubkey_serial = int_to_hex(pubkey)
+        pubkey_serial = '0x' + pubkey.hex()
         case03_private_to_public_key.append({
             'input': int_to_hex(privkey),
             'output': pubkey_serial
@@ -156,14 +156,13 @@ if __name__ == '__main__':
         for message in MESSAGES:
             for domain in DOMAINS:
                 sig = bls.sign(message, privkey, domain)
-                sig_serial = [int_to_hex(x) for x in sig]
                 case04_sign_messages.append({
                     'input': {
                         'privkey': int_to_hex(privkey),
                         'message': '0x' + message.hex(),
                         'domain': int_to_hex(domain)
                     },
-                    'output': sig_serial
+                    'output': '0x' + sig.hex()
                 })
                 sigs.append(sig)
 
@@ -188,20 +187,18 @@ if __name__ == '__main__':
     for domain in DOMAINS:
         for message in MESSAGES:
             sigs = []
-            sigs_serial = []
             for privkey in PRIVKEYS:
                 sig = bls.sign(message, privkey, domain)
                 sigs.append(sig)
-                sigs_serial.append([int_to_hex(x) for x in sig])
             case06_aggregate_sigs.append({
-                'input': sigs_serial,
-                'output': [int_to_hex(x) for x in bls.aggregate_signatures(sigs)]
+                'input': [ '0x' + sig.hex() for sig in sigs],
+                'output': '0x' + bls.aggregate_signatures(sigs).hex(),
             })
 
     #
     case07_aggregate_pubkeys = {
         'input': pubkeys_serial,
-        'output': int_to_hex(bls.aggregate_pubkeys(pubkeys))
+        'output': '0x' + bls.aggregate_pubkeys(pubkeys).hex(),
     }
 
     # TODO
