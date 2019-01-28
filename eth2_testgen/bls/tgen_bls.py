@@ -141,6 +141,7 @@ if __name__ == '__main__':
             'input': int_to_hex(privkey),
             'output': pubkey_serial
         })
+        pubkeys.append(pubkey)
         pubkeys_serial.append(pubkey_serial)
 
     #
