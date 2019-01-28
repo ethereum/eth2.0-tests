@@ -2,3 +2,4 @@
 .python-version
 __pycache__/
 test.py
+build/

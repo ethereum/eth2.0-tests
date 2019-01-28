@@ -72,7 +72,9 @@ def modular_squareroot(value: int) -> FQP:
     check = candidate_squareroot ** 2 / value
     if check in eighth_roots_of_unity[::2]:
         x1 = candidate_squareroot / eighth_roots_of_unity[eighth_roots_of_unity.index(check) // 2]
-        x2 = FQ2([-x1.coeffs[0], -x1.coeffs[1]])  # x2 = -x1
+        # TODO: fix pending upstream fix https://github.com/ethereum/py_ecc/issues/47
+        #       % q shouldn't be needed
+        x2 = FQ2([-x1.coeffs[0] % q, -x1.coeffs[1] % q])  # x2 = -x1
         return x1 if (x1.coeffs[1], x1.coeffs[0]) > (x2.coeffs[1], x2.coeffs[0]) else x2
     return None
 
