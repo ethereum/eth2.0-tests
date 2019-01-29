@@ -111,16 +111,17 @@ if __name__ == '__main__':
             })
 
     case03_private_to_public_key = []
-    pubkeys = []  #  Used in later cases
-    pubkeys_serial = []  #  Used in public key aggregation
-    for privkey in PRIVKEYS:
-        pubkey_serial = '0x' + bls.privtopub(privkey).hex()
-        case03_private_to_public_key.append({
+    #  Used in later cases
+    pubkeys = [bls.privtopub(privkey) for privkey in PRIVKEYS]
+    #  Used in public key aggregation
+    pubkeys_serial = ['0x' + pubkey.hex() for pubkey in pubkeys]
+    case03_private_to_public_key = [
+        {
             'input': int_to_hex(privkey),
-            'output': pubkey_serial
-        })
-        pubkeys.append(pubkey)
-        pubkeys_serial.append(pubkey_serial)
+            'output': pubkey_serial,
+        }
+        for privkey, pubkey_serial in zip(PRIVKEYS, pubkeys_serial)
+    ]
 
     case04_sign_messages = []
     sigs = []  # used in verify
