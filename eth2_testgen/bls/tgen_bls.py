@@ -67,11 +67,11 @@ MESSAGES = [
 ]
 
 PRIVKEYS = [
-    # Private keys are 48 bytes, Keccack hashing only produces 32 bytes
-    # So we concat two and slice
-    big_endian_to_int((hash_eth2(b'Alice') + hash_eth2(b'ecilA'))[:48]),
-    big_endian_to_int((hash_eth2(b'Bob') + hash_eth2(b'boB'))[:48]),
-    big_endian_to_int((hash_eth2(b'Eve') + hash_eth2(b'evE'))[:48])
+    # Curve order is 256 so private keys are 32 bytes at most.
+    # Keccak hashing produces 32 bytes
+    big_endian_to_int(hash_eth2(b'Alice')),
+    big_endian_to_int(hash_eth2(b'Bob')),
+    big_endian_to_int(hash_eth2(b'Eve'))
 ]
 
 def hash_message(msg: bytes, domain: int,) -> Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]]:
