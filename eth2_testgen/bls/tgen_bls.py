@@ -181,18 +181,9 @@ if __name__ == '__main__':
             {'case03_private_to_public_key': case03_private_to_public_key},
             outfile,
         )
-        yaml.dump(
-            {'case04_sign_messages': case04_sign_messages},
-            outfile,
-        )
+        yaml.dump({'case04_sign_messages': case04_sign_messages}, outfile)
 
         # Too time consuming to generate
         # yaml.dump({'case05_verify_messages': case05_verify_messages}, outfile)
-        yaml.dump(
-            {'case06_aggregate_sigs': case06_aggregate_sigs},
-            outfile,
-        )
-        yaml.dump(
-            {'case07_aggregate_pubkeys': case07_aggregate_pubkeys},
-            outfile,
-        )
+        yaml.dump({'case06_aggregate_sigs': case06_aggregate_sigs}, outfile)
+        yaml.dump({'case07_aggregate_pubkeys': case07_aggregate_pubkeys}, outfile)
