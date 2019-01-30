@@ -48,6 +48,8 @@ from hash import hash_eth2
 
 def int_to_hex(n: int) -> str:
     return '0x' + int_to_big_endian(n).hex()
+def hex_to_int(x: str) -> int:
+    return int(x, 16)
 
 # Note: even though a domain is only an uint64,
 # To avoid issues with YAML parsers that are limited to 53-bit (JS language limit)
@@ -68,10 +70,10 @@ MESSAGES = [
 
 PRIVKEYS = [
     # Curve order is 256 so private keys are 32 bytes at most.
-    # Keccak hashing produces 32 bytes
-    big_endian_to_int(hash_eth2(b'Alice')),
-    big_endian_to_int(hash_eth2(b'Bob')),
-    big_endian_to_int(hash_eth2(b'Eve'))
+    # Also not all integers is a valid private key, so using pre-generated keys
+    hex_to_int('0x00000000000000000000000000000000263dbd792f5b1be47ed85f8938c0f29586af0d3ac7b977f21c278fe1462040e3'),
+    hex_to_int('0x0000000000000000000000000000000047b8192d77bf871b62e87859d653922725724a5c031afeabc60bcef5ff665138'),
+    hex_to_int('0x00000000000000000000000000000000328388aff0d4a5b7dc9205abd374e7e98f3cd9f3418edb4eafda5fb16473d216'),
 ]
 
 def hash_message(msg: bytes, domain: int,) -> Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]]:
