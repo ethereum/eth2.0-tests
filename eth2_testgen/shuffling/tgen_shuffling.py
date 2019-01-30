@@ -4,10 +4,9 @@ from typing import Any, Dict, List
 
 import yaml
 
-from constants import SHARD_COUNT
-from core_helpers import get_new_shuffling
-from enums import ValidatorStatusCode
-from yaml_objects import ShardCommittee, ValidatorRecord
+from constants import ENTRY_EXIT_DELAY, FAR_FUTURE_EPOCH
+from core_helpers import get_shuffling
+from yaml_objects import Validator
 
 
 def noop(self, *args, **kw):
@@ -18,19 +17,22 @@ def noop(self, *args, **kw):
 yaml.emitter.Emitter.process_tag = noop
 
 
-def yaml_ValidatorStatusCode(dumper, data):
-    # Try to deal with enums - otherwise for "ValidatorStatus.Active" you get [1], instead of 1
-    return dumper.represent_data(data.value)
+EPOCH = 1000  # The epoch, also a mean for the normal distribution
 
+# Standard deviation, around 8% validators will activate or exit within
+# ENTRY_EXIT_DELAY inclusive from EPOCH thus creating an edge case for validator
+# shuffling
+RAND_EPOCH_STD = 35
 
-yaml.add_representer(ValidatorStatusCode, yaml_ValidatorStatusCode)
+MAX_EXIT_EPOCH = 5000  # Maximum exit_epoch for easier reading
+
 
 if __name__ == '__main__':
 
     # Order not preserved - https://github.com/yaml/pyyaml/issues/110
     metadata = {
         'title': 'Shuffling Algorithm Tests',
-        'summary': 'Test vectors for shuffling a list based upon a seed using `shuffle`',
+        'summary': 'Test vectors for validator shuffling. Note: only relevant validator fields are defined.',
         'test_suite': 'shuffle',
         'fork': 'tchaikovsky',
         'version': 1.0
@@ -39,24 +41,50 @@ if __name__ == '__main__':
     # Config
     random.seed(int("0xEF00BEAC", 16))
     num_cases = 10
-    list_val_state = list(ValidatorStatusCode)
-    test_cases = []
 
+    test_cases = []
     for case in range(num_cases):
         seedhash = bytes(random.randint(0, 255) for byte in range(32))
-        num_val = random.randint(128, 512)
-        validators = [
-            ValidatorRecord(
-                status=random.choice(list_val_state),
-                original_index=num_val)
-            for num_val in range(num_val)
-        ]
+        idx_max = random.randint(128, 512)
+
+        validators = []
+        for idx in range(idx_max):
+            v = Validator(original_index=idx)
+            # 4/5 of all validators are active
+            if random.random() < 0.8:
+                # Choose a normally distributed epoch number
+                rand_epoch = round(random.gauss(EPOCH, RAND_EPOCH_STD))
+
+                # for 1/2 of *active* validators rand_epoch is the activation epoch
+                if random.random() < 0.5:
+                    v.activation_epoch = rand_epoch
+
+                    # 1/4 of active validators will exit in forseeable future
+                    if random.random() < 0.5:
+                        v.exit_epoch = random.randint(
+                            rand_epoch + ENTRY_EXIT_DELAY + 1, MAX_EXIT_EPOCH)
+                    # 1/4 of active validators in theory remain in the set indefinitely
+                    else:
+                        v.exit_epoch = FAR_FUTURE_EPOCH
+                # for the other active 1/2 rand_epoch is the exit epoch
+                else:
+                    v.activation_epoch = random.randint(
+                        0, rand_epoch - ENTRY_EXIT_DELAY)
+                    v.exit_epoch = rand_epoch
+
+            # The remaining 1/5 of all validators is not activated
+            else:
+                v.activation_epoch = FAR_FUTURE_EPOCH
+                v.exit_epoch = FAR_FUTURE_EPOCH
+
+            validators.append(v)
+
         input_ = {
-            'validators_status': [v.status.value for v in validators],
-            'crosslinking_start_shard': random.randint(0, SHARD_COUNT)
+            'validators': validators,
+            'epoch': EPOCH
         }
-        output = get_new_shuffling(
-            seedhash, validators, input_['crosslinking_start_shard'])
+        output = get_shuffling(
+            seedhash, validators, input_['epoch'])
 
         test_cases.append({
             'seed': '0x' + seedhash.hex(), 'input': input_, 'output': output

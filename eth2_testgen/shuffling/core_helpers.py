@@ -1,35 +1,39 @@
 """
-copy-pasted from specs
+copy-pasted from specs. Compatible with v0.1:
+https://github.com/ethereum/eth2.0-specs/releases/tag/v0.1
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, NewType
 
 import yaml
 from eth_typing import Hash32
 
 from constants import EPOCH_LENGTH, SHARD_COUNT, TARGET_COMMITTEE_SIZE
-from enums import ValidatorStatusCode
 from utils import hash
-from yaml_objects import ShardCommittee, ValidatorRecord
+from yaml_objects import Validator
+
+EpochNumber = NewType("EpochNumber", int)
+ValidatorIndex = NewType("ValidatorIndex", int)
+Bytes32 = NewType("Bytes32", bytes)
 
 
-def is_active_validator(validator: ValidatorRecord) -> bool:
+def is_active_validator(validator: Validator, epoch: EpochNumber) -> bool:
     """
-    Checks if ``validator`` is active.
+    Check if ``validator`` is active.
     """
-    return validator.status in [ValidatorStatusCode.ACTIVE, ValidatorStatusCode.ACTIVE_PENDING_EXIT]
+    return validator.activation_epoch <= epoch < validator.exit_epoch
 
 
-def get_active_validator_indices(validators: [ValidatorRecord]) -> List[int]:
+def get_active_validator_indices(validators: List[Validator], epoch: EpochNumber) -> List[ValidatorIndex]:
     """
-    Gets indices of active validators from ``validators``.
+    Get indices of active validators from ``validators``.
     """
-    return [i for i, v in enumerate(validators) if is_active_validator(v)]
+    return [i for i, v in enumerate(validators) if is_active_validator(v, epoch)]
 
 
-def shuffle(values: List[Any], seed: Hash32) -> List[Any]:
+def shuffle(values: List[Any], seed: Bytes32) -> List[Any]:
     """
-    Returns the shuffled ``values`` with ``seed`` as entropy.
+    Return the shuffled ``values`` with ``seed`` as entropy.
     """
     values_count = len(values)
 
@@ -57,8 +61,7 @@ def shuffle(values: List[Any], seed: Hash32) -> List[Any]:
                 break
 
             # Read 3-bytes of `source` as a 24-bit big-endian integer.
-            sample_from_source = int.from_bytes(
-                source[position:position + rand_bytes], 'big')
+            sample_from_source = int.from_bytes(source[position:position + rand_bytes], 'big')
 
             # Sample values greater than or equal to `sample_max` will cause
             # modulo bias when mapped into the `remaining` range.
@@ -78,57 +81,49 @@ def shuffle(values: List[Any], seed: Hash32) -> List[Any]:
     return output
 
 
-def split(values: List[Any], split_count: int) -> List[Any]:
+def split(values: List[Any], split_count: int) -> List[List[Any]]:
     """
     Splits ``values`` into ``split_count`` pieces.
     """
     list_length = len(values)
     return [
-        values[
-            (list_length * i // split_count): (list_length * (i + 1) // split_count)
-        ]
+        values[(list_length * i // split_count): (list_length * (i + 1) // split_count)]
         for i in range(split_count)
     ]
 
-
-def get_new_shuffling(seed: Hash32,
-                      validators: List[ValidatorRecord],
-                      crosslinking_start_shard: int) -> List[List[ShardCommittee]]:
-    """
-    Shuffles ``validators`` into shard committees using ``seed`` as entropy.
-    """
-    active_validator_indices = get_active_validator_indices(validators)
-
-    committees_per_slot = max(
+def get_epoch_committee_count(active_validator_count: int) -> int:
+    return max(
         1,
         min(
             SHARD_COUNT // EPOCH_LENGTH,
-            len(active_validator_indices) // EPOCH_LENGTH // TARGET_COMMITTEE_SIZE,
+            active_validator_count // EPOCH_LENGTH // TARGET_COMMITTEE_SIZE,
         )
-    )
+    ) * EPOCH_LENGTH
 
-    # Shuffle with seed
+
+def xor(a: bytes, b: bytes) -> bytes:
+    return bytes(i ^ j for (i, j) in zip(a, b))
+
+
+def int_to_bytes32(x) -> bytes:
+    return x.to_bytes(32, 'big')
+
+
+def get_shuffling(seed: Bytes32, validators: List[Validator], epoch: EpochNumber) -> List[List[ValidatorIndex]]:
+    """
+    Shuffles ``validators`` into crosslink committees seeded by ``seed`` and ``epoch``.
+    Returns a list of ``committees_per_epoch`` committees where each
+    committee is itself a list of validator indices.
+    """
+
+    active_validator_indices = get_active_validator_indices(validators, epoch)
+
+    committees_per_epoch = get_epoch_committee_count(
+        len(active_validator_indices))
+
+    # Shuffle
+    seed = xor(seed, int_to_bytes32(epoch))
     shuffled_active_validator_indices = shuffle(active_validator_indices, seed)
 
-    # Split the shuffled list into epoch_length pieces
-    validators_per_slot = split(
-        shuffled_active_validator_indices, EPOCH_LENGTH)
-
-    output = []
-    for slot, slot_indices in enumerate(validators_per_slot):
-        # Split the shuffled list into committees_per_slot pieces
-        shard_indices = split(slot_indices, committees_per_slot)
-
-        shard_id_start = crosslinking_start_shard + slot * committees_per_slot
-
-        shard_committees = [
-            ShardCommittee(
-                shard=(shard_id_start + shard_position) % SHARD_COUNT,
-                committee=indices,
-                total_validator_count=len(active_validator_indices),
-            )
-            for shard_position, indices in enumerate(shard_indices)
-        ]
-        output.append(shard_committees)
-
-    return output
+    # Split the shuffled list into committees_per_epoch pieces
+    return split(shuffled_active_validator_indices, committees_per_epoch)
