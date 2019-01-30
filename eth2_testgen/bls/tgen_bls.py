@@ -149,6 +149,9 @@ if __name__ == '__main__':
     #
     case04_sign_messages = []
     sigs = [] # used in verify
+    # print(f"Privkeys: {PRIVKEYS}")
+    # print(f"Messages: {MESSAGES}")
+    # print(f"Domains: {DOMAINS}")
     for privkey in PRIVKEYS:
         for message in MESSAGES:
             for domain in DOMAINS:
@@ -157,7 +160,7 @@ if __name__ == '__main__':
                 case04_sign_messages.append({
                     'input': {
                         'privkey': int_to_hex(privkey),
-                        'message': '0x' + msg.hex(),
+                        'message': '0x' + message.hex(),
                         'domain': int_to_hex(domain)
                     },
                     'output': sig_serial
@@ -173,7 +176,7 @@ if __name__ == '__main__':
     #                 case04_sign_messages.append({
     #                     'input': {
     #                         'pubkey': int_to_hex(pubkey),
-    #                         'message': '0x' + msg.hex(),
+    #                         'message': '0x' + message.hex(),
     #                         'signature': sig,
     #                         'domain': domain
     #                     },
