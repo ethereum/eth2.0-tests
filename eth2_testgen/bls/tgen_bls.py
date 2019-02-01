@@ -37,9 +37,9 @@ DOMAINS = [
 ]
 
 MESSAGES = [
-    b'message',
-    b'Bigger message',
-    b'Very .............. long ............. message .... with entropy: 1234567890-beacon-chain'
+    b'\x00' * 32,
+    b'\x56' * 32,
+    b'\xab' * 32,
 ]
 
 PRIVKEYS = [
