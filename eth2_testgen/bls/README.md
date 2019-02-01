@@ -1,7 +1,7 @@
 # BLS Test Generator
 
 Explanation of BLS12-381 type hierarchy
-The base unit is uint384 of which only 381 bits are used
+The base unit is bytes48 of which only 381 bits are used
 
 - FQ: uint381 modulo field modulus
 - FQ2: (FQ, FQ)
