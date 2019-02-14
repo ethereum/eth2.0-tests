@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import yaml
 
 from core_helpers import get_permuted_index
+from constants import SHUFFLE_ROUND_COUNT
 
 
 def noop(self, *args, **kw):
@@ -61,6 +62,7 @@ if __name__ == '__main__':
 
         case["seed"] = '0x' + seed.hex()
         case["permutated_index"] = permutated_index
+        case["shuffle_round_count"] = SHUFFLE_ROUND_COUNT
 
         test_results.append(case)
 
