@@ -1,6 +1,7 @@
 title: Sanity tests -- small config -- 32 validators
 summary: Basic sanity checks from phase 0 spec pythonization using a small state configuration and 32 validators.
     All tests are run with `verify_signatures` as set to False.
+    Tests generated via https://github.com/ethereum/research/blob/master/spec_pythonizer/sanity_check.py
 test_suite: beacon_state
 fork: tchaikovsky
 version: v0.5.0
