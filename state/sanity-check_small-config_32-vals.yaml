@@ -3,8 +3,7 @@ summary: Basic sanity checks from phase 0 spec pythonization using a small state
     All tests are run with `verify_signatures` as set to False.
     Tests generated via https://github.com/ethereum/research/blob/master/spec_pythonizer/sanity_check.py
 test_suite: beacon_state
-fork: tchaikovsky
-version: v0.5.0
+fork: phase0-0.5.0
 test_cases:
 - name: test_empty_block_transition
   config:
