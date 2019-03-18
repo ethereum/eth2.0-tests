@@ -1,8 +1,7 @@
-fork: tchaikovsky
+fork: phase0-0.5.0
 summary: Test vectors for BLS signature
 test_suite: bls
 title: BLS signature and aggregation tests
-version: 1.0
 case01_message_hash_G2_uncompressed:
 - input: {domain: '0x00', message: '0x0000000000000000000000000000000000000000000000000000000000000000'}
   output:

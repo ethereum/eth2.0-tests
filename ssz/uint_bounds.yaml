@@ -1,6 +1,6 @@
 title: UInt Bounds
 summary: Integers right at or beyond the bounds of the allowed value range
-version: '0.1'
+fork: phase0-0.2.0
 test_cases:
 - type: uint8
   valid: true

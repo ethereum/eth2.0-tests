@@ -1,6 +1,6 @@
 title: UInt Wrong Length
 summary: Serialized integers that are too short or too long
-version: '0.1'
+fork: phase0-0.2.0
 test_cases:
 - type: uint8
   valid: false
